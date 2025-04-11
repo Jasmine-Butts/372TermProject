@@ -43,6 +43,8 @@ let dummyProducts = [
     },
 ];
 
+let dummyCart = [];
+
 app.get('/products', (req, res) => {
     res.json(dummyProducts);
 });
@@ -71,6 +73,38 @@ app.get('/search', (req, res) => {
     res.json(results);
 });
 
+app.get('/cart', (req, res) => {
+    res.json(dummyCart);
+});
+
+app.post('/cart', (req, res) => {
+    const { productId, quantity } = req.body;
+    if (!productId || !quantity) {
+        return res.status(400).json({ error: 'Product ID and quantity are required' });
+    }
+
+    const existingItem = dummyCart.find(item => item.productId === productId);
+    if (existingItem) {
+        existingItem.quantity += quantity;
+    } else {
+        dummyCart.push({ productId, quantity });
+    }
+
+    res.json({message: 'Item added to cart', cart: dummyCart});
+});
+
+app.delete('/cart/:productId', (req, res) => {
+    const productId = parseInt(req.params.productId);
+    dummyCart = dummyCart.filter(item => item.productId !== productId);
+    res.json({message: 'Item removed from cart', cart: dummyCart});
+});
+
+app.post('/cart/checkout', (req, res) => {
+    dummyCart = [];
+    res.json({ message: 'Checkout complete, cart is now empty.'})
+});
+
+
 app.use(express.static('public')); 
 
 app.get('/', (req, res) => {
@@ -82,16 +116,6 @@ const server = app.listen(PORT, function () {
     console.log('App listening at http://localhost:' + PORT);
 });
 
-const dummyCart = [
-    {
-        productId: 1,
-        quantity: 2,
-    },
-    {
-        productId: 2,
-        quantity: 1,
-    },
-];
 
 process.on('SIGINT', cleanUp);
 function cleanUp() {
